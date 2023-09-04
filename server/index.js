@@ -1,5 +1,7 @@
 const express = require('express')
 const cors = require("cors")
+const messageRoute = require("./api/routes/messageRoute");
+const mongoose = require('mongoose')
 const port = 3001
 
 const server = express()
@@ -14,9 +16,9 @@ server.use((_, res, next) => {
   next();
 });
 
-server.get('/', (req, res) => {
-    res.send("Hello worldddd");
-  });
+mongoose.connect("mongodb://mongo/apinode")
+
+messageRoute(server);
 
 server.listen(port, () => {
 console.log(`Example app listening on port ${port}`)
