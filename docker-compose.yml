@@ -8,6 +8,8 @@ services:
     volumes:
       - './client:/home/client_node/app'
       - '/home/client_node/app/node_modules'
+    networks:
+      - client-to-server
   server:
     build: ./server
     container_name: server
@@ -16,3 +18,22 @@ services:
     volumes:
       - './server:/home/server_node/app'
       - '/home/server_node/app/node_modules'
+    links:
+      - mongo
+    networks:
+      - client-to-server
+      - server-to-db
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+    - ./mongo:/data/db
+    networks:
+      - server-to-db
+networks:
+  client-to-server:
+    driver: bridge
+  server-to-db:
+    driver: bridge
