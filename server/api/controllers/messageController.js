@@ -1,36 +1,29 @@
 const Message = require("../models/messageModel");
 
 exports.listAllMessages = (req, res) => {
-  Message.find({}, (error, messages) => {
-    if (error) {
-      res.status(500);
-      console.log(error);
-      res.json({ message: "Erreur serveur." });
-    } else {
-      res.status(200);
-      res.json(messages);
-    }
-  });
-};
+  Message.find()
+  .then((messages) => {
+    res.status(200)
+    res.json(messages)
+  })
+  .catch((error) => {
+    console.log(error);
+    res.json({message: "Can't get messages"})
+  })
+}
 
 exports.createAMessage = (req, res) => {
+  console.log(req.body);
   let newMessage = new Message(req.body);
-
-  randomTextPromise.then((response) => {
-    if (!newMessage.content) {
-      newMessage.content = response;
-    }
-
-    newMessage.save((error, message) => {
-      if (error) {
-        res.status(401);
-        console.log(error);
-        res.json({ message: "Reqûete invalide." });
-      } else {
-        res.status(200);
-        res.json(message);
-        return;
-      }
-    });
-  });
-};
+  newMessage.save()
+  .then((message) => {
+    res.status(200)
+    res.json(message)
+    return
+  })
+  .catch((error) => {
+    res.status(401)
+    console.log(error);
+    res.json({ message: "Invalid request" });
+  })
+  }

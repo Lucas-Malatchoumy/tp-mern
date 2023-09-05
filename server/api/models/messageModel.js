@@ -15,4 +15,4 @@ let messageSchema = new Schema({
   },
 });
 
-module.exports = mongoose.model("Post", messageSchema);
+module.exports = mongoose.model("Message", messageSchema);

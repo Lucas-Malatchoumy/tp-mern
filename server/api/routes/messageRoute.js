@@ -1,6 +1,8 @@
-module.exports = (server) => {
-    const messageController = require("../controllers/messageController");
-    server.route("/messages")
-    server.get(messageController.listAllMessages)
-    server.post(messageController.createAMessage)
-  };
+const express = require('express')
+const messageController = require("../controllers/messageController");
+const router = express.Router();
+
+router.get('/', messageController.listAllMessages)
+router.post('/', messageController.createAMessage)
+
+module.exports = router;
