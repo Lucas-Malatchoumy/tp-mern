@@ -10,6 +10,8 @@ services:
       - '/home/client_node/app/node_modules'
     networks:
       - client-to-server
+    env_file:
+      - .env
   server:
     build: ./server
     container_name: server
@@ -23,13 +25,15 @@ services:
     networks:
       - client-to-server
       - server-to-db
+    env_file:
+      - .env
   mongo:
     container_name: mongo
     image: mongo
     ports:
       - "27017:27017"
     volumes:
-    - ./mongo:/data/db
+    - mongo:/data/db
     networks:
       - server-to-db
 networks:
@@ -37,3 +41,5 @@ networks:
     driver: bridge
   server-to-db:
     driver: bridge
+volumes:
+  mongo:
