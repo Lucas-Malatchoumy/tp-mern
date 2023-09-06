@@ -2,7 +2,7 @@
 
 ## Clone the project
 
-```https://github.com/Lucas-Malatchoumy/tp-mern.git````
+```https://github.com/Lucas-Malatchoumy/tp-mern.git```
 
 ## Setup the project
 
@@ -19,7 +19,7 @@ Edit environment variable like in .env.sample with your credentials :
 You need to create images from Dockerfile files (in client and server)
 You can build images and start the project at the same time : 
 
-```docker-compose -f docker-compose.dev.yml up --build````
+```docker-compose -f docker-compose.dev.yml up --build```
 
 ## In prod environment
 
