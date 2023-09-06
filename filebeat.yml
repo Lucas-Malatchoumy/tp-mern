@@ -1,0 +1,18 @@
+filebeat.inputs:
+  - type: filestream
+    id: default-filestream
+    paths:
+      - server/logs/*.log
+
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+setup.kibana:
+  hosts: ["kibana:5601"]
+
+logging.json: true
