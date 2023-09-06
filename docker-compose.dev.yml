@@ -1,0 +1,142 @@
+version: '3.0'
+services:
+  client:
+    # Client service
+    build: 
+      context: ./client
+      target: development # Build the image from the "development" stage of the client Dockerfile
+    container_name: client
+    ports:
+      - '${CLIENT_PORT}:3000' # Map the client port in the container to the specified port
+    volumes:
+      - './client:/home/client_node/app' # Mount the client's local directory into the container
+      - '/home/client_node/app/node_modules' # Mount the Node.js modules directory into the container
+    networks:
+      - client-to-server # Associate the container with the "client-to-server" networ
+    env_file:
+      - .env # Load environment variables from the .env file
+  server:
+    # Server service
+    build: ./server
+    container_name: server
+    ports:
+      - '${SERVER_PORT}:3001' # Map the server port in the container to the specified port
+    links:
+      - mongo # Link to the "mongo" container
+    depends_on:
+      - mongo # Wait for the "mongo" container to be ready
+    volumes:
+      - './server:/home/server_node/app' # Mount the server's local directory into the container
+      - '/home/server_node/app/node_modules' # Mount the Node.js modules directory into the container
+    networks:
+      - client-to-server # Associate the container with the "client-to-server" network
+      - server-to-db # Associate the container with the "server-to-db" network
+    env_file:
+      - .env # Load environment variables from the .env file
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${DB_USER} # Set environment variables for the server
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${DB_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+  mongo:
+    # MongoDB service
+    container_name: mongo
+    image: mongo
+    ports:
+      - '${MONGO_PORT}:27017' # Map the MongoDB port in the container to the specified port
+    env_file:
+      - .env # Load environment variables from the .env file
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER} # Set environment variables for MongoDB
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+    volumes:
+      - mongo:/data/db # Mount the MongoDB data directory
+      - ./server/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - server-to-db # Associate the container with the "server-to-db" network
+  elasticsearch:
+    # Elasticsearch service
+    image: elasticsearch:8.9.1
+    container_name: elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: false
+      ES_JAVA_OPTS: '-Xms512m -Xmx512m'
+    ports:
+      - '${ELASTIC_PORT}:9200' # Map the Elasticsearch port in the container to the specified port
+    healthcheck:
+      test: ['CMD-SHELL', 'curl --silent --fail localhost:9200/_cluster/health || exit 1']
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    networks:
+      - elastic # Associate the container with the "elastic" network
+  logstash:
+    # Logstash service
+    image: logstash:8.9.1
+    container_name: logstash
+    environment:
+      - discovery.seed_hosts=logstash
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+      - ELASTIC_HOSTS=${ELASTIC_HOSTS}
+      - KIBANA_HOSTS=${KIBANA_HOSTS}
+      - LOGSTASH_HOSTS=${LOGSTASH_HOSTS}
+    volumes:
+      - './logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf'
+    ports:
+      - "5001:5000"
+      - "5044:5044"
+      - "9600:9600"
+    depends_on:
+      - elasticsearch
+    networks:
+      - elastic # Associate the container with the "elastic" network
+    command: logstash -f /usr/share/logstash/pipeline/logstash.conf
+  kibana:
+    # Kibana service
+    image: kibana:8.9.1
+    container_name: kibana
+    ports:
+      - "${KIBANA_PORT}:5601" # Map the Kibana port in the container to the specified port
+    environment:
+      - ELASTIC_HOSTS=${ELASTIC_HOSTS}
+    depends_on:
+      - elasticsearch
+    networks:
+      - elastic # Associate the container with the "elastic" network
+  filebeat:
+  # Filebeat service for log collection
+    depends_on:
+      - elasticsearch
+    image: docker.elastic.co/beats/filebeat:8.9.1
+    user: root
+    container_name: filebeat
+    volumes:
+      - "./server/logs/:/usr/share/filebeat/ingest_data/" # Mount log files for Filebeat
+      - "./filebeat.yml:/usr/share/filebeat/filebeat.yml" # Mount Filebeat configuration file
+      # Mount Docker socket for container monitoring
+      - type: bind
+        source: /var/lib/docker/containers
+        target: /var/lib/docker/containers
+        read_only: true
+      - type: bind  
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        read_only: true
+    command: filebeat -e -c /usr/share/filebeat/filebeat.yml
+    environment:
+    - ELASTIC_HOSTS=${ELASTIC_HOSTS}
+    - KIBANA_HOSTS=${KIBANA_HOSTS}
+    - LOGSTASH_HOSTS=${LOGSTASH_HOSTS}
+    networks:
+      - elastic # Associate the container with the "elastic" network
+networks:
+  client-to-server:
+    driver: bridge # Define the network for communication between client and server containers
+  server-to-db:
+    driver: bridge # Define the network for communication between server and database containers
+  elastic:
+    driver: bridge # Define the network for communication between Elasticsearch, Logstash, and Kibana containers
+volumes:
+  mongo:
+
