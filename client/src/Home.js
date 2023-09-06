@@ -13,7 +13,11 @@ function App() {
 
   function getMessages() {
     axios
-      .get(`${baseUrl}:3001/messages`)
+      .get(`${baseUrl}:3001/messages`, {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
       .then((response) => {
         if (response.data.error) {
           console.log(response.data.error);
