@@ -5,7 +5,6 @@ exports.listAllMessages = (req, res) => {
   Message.find()
   .then((messages) => {
     res.status(200)
-    console.log('test')
     res.json(messages)
   })
   .catch((error) => {
