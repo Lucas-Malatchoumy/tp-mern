@@ -10,9 +10,9 @@ filebeat.autodiscover:
       hints.enabled: true
 
 output.logstash:
-  hosts: ["logstash:5044"]
+  hosts: ${LOGSTASH_HOSTS}
 
 setup.kibana:
-  hosts: ["kibana:5601"]
+  hosts: ${KIBANA_HOSTS}
 
 logging.json: true
