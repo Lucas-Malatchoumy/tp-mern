@@ -9,8 +9,8 @@ filebeat.autodiscover:
     - type: docker
       hints.enabled: true
 
-output.logstash:
-  hosts: ${LOGSTASH_HOSTS}
+output.elasticsearch:
+  hosts: ${ELASTIC_HOSTS}
 
 setup.kibana:
   hosts: ${KIBANA_HOSTS}
